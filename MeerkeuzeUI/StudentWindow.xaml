@@ -1,0 +1,197 @@
+﻿<Window x:Class="MeerkeuzeUI.StudentWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MeerkeuzeUI"
+        mc:Ignorable="d"
+        Title="Studenten Quiz Omgeving" Height="400" Width="650" Background="#F4F6F7">
+
+    <Window.Resources>
+        <Style x:Key="AfgerondeKnop" TargetType="Button">
+            <Setter Property="Background" Value="#FF6A5C5C"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="15,10,15,10"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.85"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
+
+        <Border x:Name="BorderAanmelden" 
+                Visibility="Visible" 
+                Background="White" 
+                CornerRadius="12" 
+                MaxWidth="450" 
+                VerticalAlignment="Center" 
+                Padding="30">
+            <Border.Effect>
+                <DropShadowEffect Color="#000000" Opacity="0.05" BlurRadius="15" ShadowDepth="2"/>
+            </Border.Effect>
+
+            <StackPanel>
+                <TextBlock Text="Voer je gegevens in" FontSize="24" FontWeight="Bold" Foreground="#2C3E50" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+
+                <Label Content="Je volledige naam:" FontWeight="Bold" Foreground="#34495E" Margin="0,0,0,5"/>
+                <TextBox x:Name="TxtStudentNaam" FontSize="14" Padding="6" Margin="0,0,0,15"/>
+
+                <Label Content="Unieke Testcode:" FontWeight="Bold" Foreground="#34495E" Margin="0,0,0,5"/>
+                <TextBox x:Name="TxtDeelnameCode" FontSize="14" Padding="6" Margin="0,0,0,25"/>
+
+                <Button x:Name="BtnStartTest" 
+                        Content="Start de Test" 
+                        Style="{StaticResource AfgerondeKnop}" 
+                        FontSize="16" 
+                        FontWeight="Bold"
+                        Click="BtnStartTest_Click"/>
+            </StackPanel>
+        </Border>
+
+        <Grid x:Name="GridTestOmgeving" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Background="White" Padding="15" CornerRadius="8" Margin="0,0,0,15">
+                <Grid>
+                    <TextBlock x:Name="TxtWeergaveOnderwerp" Text="Onderwerp: ..." FontSize="18" FontWeight="Bold" Foreground="#2C3E50" VerticalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock Text="Kandidaat: " FontSize="14" Foreground="#7F8C8D" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="TxtWeergaveStudentNaam" Text="Naam" FontSize="14" FontWeight="Bold" Foreground="#2C3E50" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,0,0,15">
+                <ItemsControl x:Name="ICVragen">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="White" CornerRadius="8" Margin="0,0,0,15" Padding="20">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#000000" Opacity="0.03" BlurRadius="5" ShadowDepth="1"/>
+                                </Border.Effect>
+
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Inhoud}" FontSize="16" FontWeight="Bold" Foreground="#2C3E50" TextWrapping="Wrap" Margin="0,0,0,15"/>
+
+                                    <ListBox ItemsSource="{Binding Keuzes}" BorderThickness="0" Background="Transparent">
+                                        <ListBox.ItemContainerStyle>
+                                            <Style TargetType="ListBoxItem">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="ListBoxItem">
+                                                            <ContentPresenter />
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </ListBox.ItemContainerStyle>
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <RadioButton Content="{Binding Tekst}" 
+                                                             Margin="0,6,0,6" 
+                                                             FontSize="14" 
+                                                             Foreground="#34495E"
+                                                             IsChecked="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"/>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <Button x:Name="BtnIndienen" 
+                    Grid.Row="2" 
+                    Content="Test Beëindigen en Indienen" 
+                    Style="{StaticResource AfgerondeKnop}" 
+                    FontSize="16" 
+                    FontWeight="Bold" 
+                    HorizontalAlignment="Right"
+                    Click="BtnIndienen_Click"/>
+        </Grid>
+
+        <Grid x:Name="GridResultaatScherm" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Background="#2E7D32" CornerRadius="8" Padding="20" Margin="0,0,0,20">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="Test Succesvol Ingediend!" FontSize="22" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,5,0,0">
+                        <TextBlock Text="Jouw Score: " FontSize="18" Foreground="#E8F5E9"/>
+                        <TextBlock x:Name="TxtEindScoreWeergave" Text="0 / 0" FontSize="18" FontWeight="Bold" Foreground="White"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Text="Resultatenoverzicht per vraag:" FontSize="14" FontWeight="Bold" Foreground="#34495E" Margin="0,0,0,10"/>
+
+                <DataGrid x:Name="DGFeedback" AutoGenerateColumns="False" IsReadOnly="True" Background="White" RowHeaderWidth="0" GridLinesVisibility="None">
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Header="Evaluatie overzicht" Width="*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Padding="10">
+                                        <TextBlock Text="{Binding VraagInhoud}" FontWeight="Bold" FontSize="14" Foreground="#2C3E50" TextWrapping="Wrap" Margin="0,0,0,5"/>
+
+                                        <TextBlock Text="{Binding FeedbackDetails}" FontSize="13" TextWrapping="Wrap">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#C62828"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsCorrect}" Value="True">
+                                                            <Setter Property="Foreground" Value="#2E7D32"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+
+            <Button x:Name="BtnSluiten" 
+                    Grid.Row="2" 
+                    Content="Afsluiten" 
+                    Style="{StaticResource AfgerondeKnop}" 
+                    FontSize="14" 
+                    Margin="0,15,0,0"
+                    HorizontalAlignment="Center"
+                    Click="BtnSluiten_Click"/>
+        </Grid>
+
+    </Grid>
+</Window>

@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="BusinessLaag/BusinessLaag.csproj" />
+  <Project Path="DataLaag/DataLaag.csproj" />
+  <Project Path="MeerkeuzeUI/MeerkeuzeUI.csproj" />
+  <Project Path="TestProjectBL/TestProjectBL.csproj" />
+</Solution>
