@@ -160,7 +160,7 @@
                         <DataGridTemplateColumn Header="Evaluatie overzicht" Width="*">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <StackPanel Padding="10">
+                                    <StackPanel Margin="10">
                                         <TextBlock Text="{Binding VraagInhoud}" FontWeight="Bold" FontSize="14" Foreground="#2C3E50" TextWrapping="Wrap" Margin="0,0,0,5"/>
 
                                         <TextBlock Text="{Binding FeedbackDetails}" FontSize="13" TextWrapping="Wrap">
