@@ -203,62 +203,6 @@ namespace DataLaag.Repositories
             return onderwerpen;
         }
 
-        public void OpslaanTest(string testCode, List<Vraag> vragen)
-        {
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            {
-                conn.Open();
-                SqlTransaction trans = conn.BeginTransaction();
-
-                try
-                {
-                    
-                    string sqlCheck = "SELECT COUNT(*) FROM Testen WHERE Code = @code";
-                    using (SqlCommand cmdCheck = new SqlCommand(sqlCheck, conn, trans))
-                    {
-                        cmdCheck.Parameters.AddWithValue("@code", testCode);
-                        int aantal = (int)cmdCheck.ExecuteScalar();
-                        if (aantal > 0)
-                        {
-                            throw new Exception("Deze testcode bestaat al! Kies een unieke code.");
-                        }
-                    }
-
-                    
-                    string sqlTest = "INSERT INTO Testen (Code, Datum) OUTPUT INSERTED.Id VALUES (@code, @datum)";
-                    int nieuwTestId;
-
-                    using (SqlCommand cmdTest = new SqlCommand(sqlTest, conn, trans))
-                    {
-                        cmdTest.Parameters.AddWithValue("@code", testCode);
-                        cmdTest.Parameters.AddWithValue("@datum", DateTime.Now);
-
-                        
-                        nieuwTestId = (int)cmdTest.ExecuteScalar();
-                    }
-
-                    
-                    foreach (var vraag in vragen)
-                    {
-                        string sqlKoppel = "INSERT INTO TestVragen (TestId, VraagId) VALUES (@TestId, @vraagId)";
-                        using (SqlCommand cmdKoppel = new SqlCommand(sqlKoppel, conn, trans))
-                        {
-                            
-                            cmdKoppel.Parameters.AddWithValue("@TestId", nieuwTestId);
-                            cmdKoppel.Parameters.AddWithValue("@vraagId", vraag.Id);
-                            cmdKoppel.ExecuteNonQuery();
-                        }
-                    }
-
-                    trans.Commit();
-                }
-                catch (Exception)
-                {
-                    trans.Rollback();
-                    throw;
-                }
-            }
-
-        }
+        
     }
 }

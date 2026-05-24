@@ -12,17 +12,16 @@ namespace BusinessLaag.Managers
     public class TestManager
     {
         private readonly IVraagRepository _vraagRepo;
+        private readonly ITestRepository _testRepo;
 
-        public TestManager(IVraagRepository vraagRepo)
+        public TestManager(IVraagRepository vraagRepo, ITestRepository testRepo)
         {
-            _vraagRepo = vraagRepo ?? throw new ArgumentNullException(nameof(vraagRepo));
+            _vraagRepo = vraagRepo;
+            _testRepo = testRepo;
         }
 
         
-        /// <param name="onderwerp">Het onderwerp waaruit vragen gehaald worden.</param>
-        /// <param name="aantal">Hoeveel vragen er nodig zijn.</param>
-        /// <param name="moeilijkheid">"Gemengd" = alle niveaus, anders exact filteren.</param>
-        /// <param name="reedsGekozen">Vragen die al in de test zitten (worden uitgesloten).</param>
+       
         public List<Vraag> GenereerTestVragen(
             string onderwerp,
             int aantal,
@@ -77,7 +76,7 @@ namespace BusinessLaag.Managers
                 throw new VraagExceptions("Een test moet minstens één vraag bevatten.");
 
             
-            _vraagRepo.OpslaanTest(testCode, vragen);
+            _testRepo.OpslaanTest(testCode, vragen);
 
             
             using (StreamWriter swTest = new StreamWriter(opslagPad, false, Encoding.UTF8))
@@ -135,11 +134,16 @@ namespace BusinessLaag.Managers
             }
         }
 
-        
+       
 
         private List<MeerkeuzeOptie> HusselAntwoorden(List<MeerkeuzeOptie> opties)
         {
             return opties.OrderBy(_ => Guid.NewGuid()).ToList();
+        }
+
+        public Test GetTestByCode(string code)
+        {
+            return _testRepo.GetTestByCode(code);
         }
     }
 }

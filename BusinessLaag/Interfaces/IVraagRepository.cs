@@ -17,7 +17,7 @@ namespace BusinessLaag.Interfaces
         void DeactiveerVraag(int vraagId);
         List<string> GetAlleOnderwerpen();
 
-        void OpslaanTest(string testCode, List<Vraag> vragen);
+        
 
 
     }

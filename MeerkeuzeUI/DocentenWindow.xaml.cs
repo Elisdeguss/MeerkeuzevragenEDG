@@ -31,6 +31,7 @@ namespace MeerkeuzeUI
         private string connectionString;
 
         private readonly VraagManager _vraagManager;
+        private readonly TestManager _testManager;
         private readonly IVraagRepository _vraagRepo;
 
 
@@ -43,7 +44,7 @@ namespace MeerkeuzeUI
 
             _vraagRepo = new VraagRepository(connectionString);
             _vraagManager = new VraagManager(_vraagRepo, new FileReaderFactory());
-
+            _testManager = new TestManager(_vraagRepo);
 
             _geselecteerdeVragen = new ObservableCollection<Vraag>();
 
