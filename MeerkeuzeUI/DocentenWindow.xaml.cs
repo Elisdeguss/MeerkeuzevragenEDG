@@ -1,364 +1,268 @@
 ﻿using BusinessLaag.Interfaces;
 using BusinessLaag.Managers;
-using BusinessLaag.Model;
 using DataLaag;
+using DataLaag.Mappers;
+using DataLaag.ModelUI;
 using DataLaag.Repositories;
+using MeerkeuzeUI.Mappers;
+using MeerkeuzeUI.Models;
 using Microsoft.Extensions.Configuration;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.IO;
-using System.Text;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using Path = System.IO.Path;
 
 namespace MeerkeuzeUI
 {
-    /// <summary>
-    /// Interaction logic for DocentenWindow.xaml
-    /// </summary>
     public partial class DocentenWindow : Window
     {
-
-        private string connectionString;
-
         private readonly VraagManager _vraagManager;
         private readonly TestManager _testManager;
-        private readonly IVraagRepository _vraagRepo;
 
+        // ObservableCollection — DataGrid update automatisch bij Add/Remove
+        private ObservableCollection<VraagUI> _geselecteerdeVragen;
 
-        private ObservableCollection<Vraag> _geselecteerdeVragen;
         public DocentenWindow()
         {
             InitializeComponent();
 
-            LeesConfig();
+            // Config lezen en lagen opzetten
+            string connectionString = LeesConnectionString();
+            IVraagRepository vraagRepo = new VraagRepository(connectionString);
+            ITestRepository testRepo = new TestRepository(connectionString);
 
-            _vraagRepo = new VraagRepository(connectionString);
-            _vraagManager = new VraagManager(_vraagRepo, new FileReaderFactory());
-            _testManager = new TestManager(_vraagRepo);
+            _vraagManager = new VraagManager(vraagRepo, new FileReaderFactory());
+            _testManager = new TestManager(vraagRepo, testRepo);
 
-            _geselecteerdeVragen = new ObservableCollection<Vraag>();
-
-
+            // ObservableCollection aanmaken en koppelen aan DataGrid via binding
+            _geselecteerdeVragen = new ObservableCollection<VraagUI>();
             DGPreviewTestVragen.ItemsSource = _geselecteerdeVragen;
 
-
-            _geselecteerdeVragen.CollectionChanged += GeselecteerdeVragen_CollectionChanged;
-
+            // CollectionChanged: update teller automatisch als lijst verandert
+            _geselecteerdeVragen.CollectionChanged += (s, e) =>
+            {
+                TxtTotaalVragenaantal.Text = _geselecteerdeVragen.Count.ToString();
+            };
 
             SeedDatabaseVanuitResources();
-            VulMoeilijkheidsgraadDropdowns();
             VulOnderwerpDropdowns();
+            VulMoeilijkheidsgraadDropdowns();
         }
 
-        private void GeselecteerdeVragen_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
-        {
+        // ── Configuratie ─────────────────────────────────────────────────────────
 
-            TxtTotaalVragenaantal.Text = _geselecteerdeVragen.Count.ToString();
-        }
-
-        private void LeesConfig()
+        private string LeesConnectionString()
         {
-            var builder = new ConfigurationBuilder()
+            var config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-            var config = builder.Build();
-
-            connectionString = config.GetConnectionString("SqlConnection");
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .Build();
+            return config.GetConnectionString("SqlConnection");
         }
+
+        // ── Dropdowns vullen ─────────────────────────────────────────────────────
+
+        private void VulOnderwerpDropdowns()
+        {
+            try
+            {
+                // Via manager, nooit rechtstreeks via repository!
+                var onderwerpen = _vraagManager.GetAlleOnderwerpen();
+
+                foreach (var cbo in new[] { CboOnderwerp1, CboOnderwerp2, CboOnderwerp3, CboOnderwerp4, CboOnderwerp5 })
+                {
+                    cbo.ItemsSource = onderwerpen;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Fout bij het inladen van de onderwerpen: {ex.Message}",
+                    "Fout", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void VulMoeilijkheidsgraadDropdowns()
+        {
+            var opties = new[] { "Gemengd", "Beginner", "Expert", "Open level" };
+
+            foreach (var cbo in new[] { CboMoeilijkheid1, CboMoeilijkheid2, CboMoeilijkheid3, CboMoeilijkheid4, CboMoeilijkheid5 })
+            {
+                cbo.ItemsSource = opties;
+                cbo.SelectedIndex = 0;
+            }
+        }
+
+        // ── Data-import bij opstarten ─────────────────────────────────────────────
 
         private void SeedDatabaseVanuitResources()
         {
             try
             {
                 string resourcesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources");
+                if (!Directory.Exists(resourcesPath)) return;
 
-                if (Directory.Exists(resourcesPath))
+                foreach (string bestand in Directory.GetFiles(resourcesPath, "*.txt"))
                 {
-                    string[] txtBestanden = Directory.GetFiles(resourcesPath, "*.txt");
-
-                    foreach (string bestand in txtBestanden)
-                    {
-                        try
-                        {
-
-                            _vraagManager.ImporteerBestand(bestand);
-                        }
-                        catch (Exception)
-                        {
-
-                        }
-                    }
+                    try { _vraagManager.ImporteerBestand(bestand); }
+                    catch { /* duplicaten worden stilletjes genegeerd */ }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Fout bij automatische data-seed: {ex.Message}", "Waarschuwing", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show($"Fout bij automatische data-seed: {ex.Message}",
+                    "Waarschuwing", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
-        private void VulMoeilijkheidsgraadDropdowns()
-        {
-            List<string> opties = new List<string> { "Gemengd", "Beginner", "Expert", "Open level" };
-
-            foreach (string optie in opties)
-            {
-                CboMoeilijkheid1.Items.Add(optie);
-                CboMoeilijkheid2.Items.Add(optie);
-                CboMoeilijkheid3.Items.Add(optie);
-                CboMoeilijkheid4.Items.Add(optie);
-                CboMoeilijkheid5.Items.Add(optie);
-            }
-
-            CboMoeilijkheid1.SelectedIndex = 0;
-            CboMoeilijkheid2.SelectedIndex = 0;
-            CboMoeilijkheid3.SelectedIndex = 0;
-            CboMoeilijkheid4.SelectedIndex = 0;
-            CboMoeilijkheid5.SelectedIndex = 0;
-        }
-
-        private void VulOnderwerpDropdowns()
-        {
-            try
-            {
-                List<string> onderwerpen = _vraagRepo.GetAlleOnderwerpen();
-
-                foreach (string onderwerp in onderwerpen)
-                {
-                    CboOnderwerp1.Items.Add(onderwerp);
-                    CboOnderwerp2.Items.Add(onderwerp);
-                    CboOnderwerp3.Items.Add(onderwerp);
-                    CboOnderwerp4.Items.Add(onderwerp);
-                    CboOnderwerp5.Items.Add(onderwerp);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Fout bij het inladen van de onderwerpen: {ex.Message}", "Fout", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
+        // ── Tab: Test Genereren ───────────────────────────────────────────────────
 
         private void BtnGenereerTest_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(TxtTestCode.Text))
             {
-                MessageBox.Show("Vul eerst een unieke testcode in!", "Invoer vereist", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Vul eerst een unieke testcode in!",
+                    "Invoer vereist", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             _geselecteerdeVragen.Clear();
 
-
             var invoerRijen = new[]
             {
-        new { OnderwerpCbo = CboOnderwerp1, MoeilijkheidCbo = CboMoeilijkheid1, AantalTxt = TxtAantal1 },
-        new { OnderwerpCbo = CboOnderwerp2, MoeilijkheidCbo = CboMoeilijkheid2, AantalTxt = TxtAantal2 },
-        new { OnderwerpCbo = CboOnderwerp3, MoeilijkheidCbo = CboMoeilijkheid3, AantalTxt = TxtAantal3 },
-        new { OnderwerpCbo = CboOnderwerp4, MoeilijkheidCbo = CboMoeilijkheid4, AantalTxt = TxtAantal4 },
-        new { OnderwerpCbo = CboOnderwerp5, MoeilijkheidCbo = CboMoeilijkheid5, AantalTxt = TxtAantal5 }
-    };
-
-            Random rng = new Random();
+                new { Onderwerp = CboOnderwerp1, Moeilijkheid = CboMoeilijkheid1, Aantal = TxtAantal1 },
+                new { Onderwerp = CboOnderwerp2, Moeilijkheid = CboMoeilijkheid2, Aantal = TxtAantal2 },
+                new { Onderwerp = CboOnderwerp3, Moeilijkheid = CboMoeilijkheid3, Aantal = TxtAantal3 },
+                new { Onderwerp = CboOnderwerp4, Moeilijkheid = CboMoeilijkheid4, Aantal = TxtAantal4 },
+                new { Onderwerp = CboOnderwerp5, Moeilijkheid = CboMoeilijkheid5, Aantal = TxtAantal5 },
+            };
 
             try
             {
                 foreach (var rij in invoerRijen)
                 {
+                    if (rij.Onderwerp.SelectedItem == null) continue;
+                    if (!int.TryParse(rij.Aantal.Text, out int aantal) || aantal <= 0) continue;
 
-                    if (rij.OnderwerpCbo.SelectedItem == null) continue;
+                    string onderwerp = rij.Onderwerp.SelectedItem.ToString();
+                    string moeilijkheid = rij.Moeilijkheid.SelectedItem?.ToString() ?? "Gemengd";
 
-                    string onderwerp = rij.OnderwerpCbo.SelectedItem.ToString();
-                    string moeilijkheid = rij.MoeilijkheidCbo.SelectedItem?.ToString() ?? "Gemengd";
+                    // Businesslogica zit in de manager, niet hier!
+                    var nieuweVragen = _testManager.GenereerTestVragen(
+                        onderwerp, aantal, moeilijkheid,
+                        VraagMapper.MapLijstNaarDomein(_geselecteerdeVragen.ToList()));
 
-
-                    if (!int.TryParse(rij.AantalTxt.Text, out int gevraagdAantal) || gevraagdAantal <= 0) continue;
-
-
-                    List<Vraag> alleVragen = _vraagRepo.GetVragenByOnderwerp(onderwerp, true);
-
-
-                    List<Vraag> niveauGefilterd = new List<Vraag>();
-                    foreach (Vraag v in alleVragen)
-                    {
-                        if (moeilijkheid == "Gemengd" || v.Moeilijkheidsgraad == moeilijkheid)
-                        {
-                            niveauGefilterd.Add(v);
-                        }
-                    }
-
-
-                    List<Vraag> beschikbareUniekeVragen = new List<Vraag>();
-                    foreach (Vraag v in niveauGefilterd)
-                    {
-                        bool zitAlInTest = false;
-                        foreach (Vraag reedsGekozen in _geselecteerdeVragen)
-                        {
-                            if (reedsGekozen.Id == v.Id)
-                            {
-                                zitAlInTest = true;
-                                break;
-                            }
-                        }
-
-
-                        if (!zitAlInTest)
-                        {
-                            beschikbareUniekeVragen.Add(v);
-                        }
-                    }
-
-
-                    if (beschikbareUniekeVragen.Count < gevraagdAantal)
-                    {
-                        MessageBox.Show($"Niet genoeg unieke vragen voor {onderwerp} ({moeilijkheid}).\n" +
-                                        $"Je vraagt er {gevraagdAantal}, maar er zijn er nog maar {beschikbareUniekeVragen.Count} over.",
-                                        "Te weinig vragen", MessageBoxButton.OK, MessageBoxImage.Warning);
-                        return;
-                    }
-
-
-                    for (int i = beschikbareUniekeVragen.Count - 1; i > 0; i--)
-                    {
-                        int j = rng.Next(i + 1);
-                        Vraag temp = beschikbareUniekeVragen[i];
-                        beschikbareUniekeVragen[i] = beschikbareUniekeVragen[j];
-                        beschikbareUniekeVragen[j] = temp;
-                    }
-
-
-                    for (int i = 0; i < gevraagdAantal; i++)
-                    {
-                        _geselecteerdeVragen.Add(beschikbareUniekeVragen[i]);
-                    }
+                    // Domein → UI via mapper, dan toevoegen aan ObservableCollection
+                    foreach (var v in VraagMapper.MapLijstNaarUI(nieuweVragen))
+                        _geselecteerdeVragen.Add(v);
                 }
 
                 if (_geselecteerdeVragen.Count == 0)
-                {
-                    MessageBox.Show("Vul minstens één rij correct in om een test te kunnen genereren.", "Informatie", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
+                    MessageBox.Show("Vul minstens één rij correct in.",
+                        "Informatie", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Fout bij het genereren: {ex.Message}", "Fout", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Fout bij het genereren: {ex.Message}",
+                    "Fout", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void BtnBewerkTest_Click(object sender, RoutedEventArgs e)
+        {
+            if (_geselecteerdeVragen.Count == 0)
+            {
+                MessageBox.Show("Genereer eerst een test voordat je die manueel bewerkt.",
+                    "Geen vragen", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // We geven de ObservableCollection rechtstreeks mee —
+            // wijzigingen in BewerkTestWindow zijn dus direct zichtbaar hier.
+            var bewerkWindow = new BewerkTestWindow(_geselecteerdeVragen, _testManager, _vraagManager);
+            bewerkWindow.ShowDialog();
+
+            // Geen refresh nodig! ObservableCollection heeft de DataGrid al geüpdatet.
         }
 
         private void BtnOpslaanEnExporteren_Click(object sender, RoutedEventArgs e)
         {
             string testCode = TxtTestCode.Text.Trim();
+
             if (string.IsNullOrWhiteSpace(testCode))
             {
-                MessageBox.Show("Vul een unieke testcode in voordat je de test opslaat!", "Invoer Vereist", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Vul een unieke testcode in voordat je de test opslaat!",
+                    "Invoer vereist", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-
-            if (_geselecteerdeVragen == null || _geselecteerdeVragen.Count == 0)
+            if (_geselecteerdeVragen.Count == 0)
             {
-                MessageBox.Show("Er zijn nog geen vragen gegenereerd om op te slaan. Klik eerst op 'Genereer Test'.", "Geen Data", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Genereer eerst een test voor je opslaat.",
+                    "Geen data", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             try
             {
-
-                string downloadsPad = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
-
+                string downloadsPad = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
                 string basisNaam = $"Test_{testCode}";
-                string extensie = ".txt";
-                string doelBestand = Path.Combine(downloadsPad, basisNaam + extensie);
+                string doelBestand = Path.Combine(downloadsPad, $"{basisNaam}.txt");
 
-
+                // Vermijd overschrijven van bestaand bestand
                 int teller = 1;
                 while (File.Exists(doelBestand))
-                {
-                    doelBestand = Path.Combine(downloadsPad, $"{basisNaam} ({teller}){extensie}");
-                    teller++;
-                }
+                    doelBestand = Path.Combine(downloadsPad, $"{basisNaam} ({teller++}).txt");
 
+                // UI → domein via mapper, dan opslaan via manager
+                var vragenDomein = VraagMapper.MapLijstNaarDomein(_geselecteerdeVragen.ToList());
+                _testManager.OpslaanEnExporteerTest(testCode, vragenDomein, doelBestand);
 
-                List<Vraag> vragenLijst = new List<Vraag>(_geselecteerdeVragen);
-
-
-                _vraagManager.OpslaanEnExporteerTest(testCode, vragenLijst, doelBestand);
-
-
-                MessageBox.Show($"De test '{testCode}' is succesvol opgeslagen in de database en geëxporteerd naar je Downloads-map!",
-                                "Succesvol Geëxporteerd", MessageBoxButton.OK, MessageBoxImage.Information);
-
+                MessageBox.Show($"Test '{testCode}' opgeslagen en geëxporteerd naar je Downloads-map!",
+                    "Succes", MessageBoxButton.OK, MessageBoxImage.Information);
 
                 System.Diagnostics.Process.Start("explorer.exe", downloadsPad);
-
 
                 TxtTestCode.Clear();
                 _geselecteerdeVragen.Clear();
             }
             catch (Exception ex)
             {
-
-                MessageBox.Show($"Er is een fout opgetreden bij het verwerken van de test:\n{ex.Message}",
-                                "Fout bij opslaan", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Fout bij het opslaan:\n{ex.Message}",
+                    "Fout", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-
-
         }
-        private void CboOnderwerp_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+
+        // ── Moeilijkheidsgraad dynamisch updaten bij onderwerpkeuze ──────────────
+
+        private void CboOnderwerp_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            ComboBox cboOnderwerp = sender as ComboBox;
-            if (cboOnderwerp == null || cboOnderwerp.SelectedItem == null) return;
+            if (sender is not ComboBox cboOnderwerp || cboOnderwerp.SelectedItem == null) return;
 
-            string gekozenOnderwerp = cboOnderwerp.SelectedItem.ToString();
+            // Zoek de bijhorende moeilijkheidsgraad-dropdown via de naam
+            string suffix = cboOnderwerp.Name.Last().ToString();
+            var cbos = new[] { CboMoeilijkheid1, CboMoeilijkheid2, CboMoeilijkheid3, CboMoeilijkheid4, CboMoeilijkheid5 };
+            if (!int.TryParse(suffix, out int index) || index < 1 || index > cbos.Length) return;
 
-
-            ComboBox cboMoeilijkheid = null;
-            if (cboOnderwerp.Name == "CboOnderwerp1") cboMoeilijkheid = CboMoeilijkheid1;
-            else if (cboOnderwerp.Name == "CboOnderwerp2") cboMoeilijkheid = CboMoeilijkheid2;
-            else if (cboOnderwerp.Name == "CboOnderwerp3") cboMoeilijkheid = CboMoeilijkheid3;
-            else if (cboOnderwerp.Name == "CboOnderwerp4") cboMoeilijkheid = CboMoeilijkheid4;
-            else if (cboOnderwerp.Name == "CboOnderwerp5") cboMoeilijkheid = CboMoeilijkheid5;
-
-            if (cboMoeilijkheid == null) return;
-
-
-            cboMoeilijkheid.Items.Clear();
-            cboMoeilijkheid.Items.Add("Gemengd");
+            ComboBox cboMoeilijkheid = cbos[index - 1];
+            string onderwerp = cboOnderwerp.SelectedItem.ToString();
 
             try
             {
+                // Haal beschikbare moeilijkheidsgraden op via manager
+                var vragen = _testManager.GenereerTestVragen(onderwerp, 1);
+                var graden = vragen.Select(v => v.Moeilijkheidsgraad).Distinct().ToList();
 
-                List<Vraag> vragen = _vraagRepo.GetVragenByOnderwerp(gekozenOnderwerp, true);
-
-
-                List<string> gevondenGraden = new List<string>();
-                foreach (Vraag v in vragen)
-                {
-                    if (!gevondenGraden.Contains(v.Moeilijkheidsgraad))
-                    {
-                        gevondenGraden.Add(v.Moeilijkheidsgraad);
-                    }
-                }
-
-
-                foreach (string graad in gevondenGraden)
-                {
-                    cboMoeilijkheid.Items.Add(graad);
-                }
-
-
+                cboMoeilijkheid.ItemsSource = new[] { "Gemengd" }.Concat(graden).ToList();
                 cboMoeilijkheid.SelectedIndex = 0;
             }
-            catch (Exception ex)
+            catch
             {
-                MessageBox.Show($"Fout bij het ophalen van moeilijkheidsgraden: {ex.Message}");
+                cboMoeilijkheid.ItemsSource = new[] { "Gemengd" };
+                cboMoeilijkheid.SelectedIndex = 0;
             }
         }
     }

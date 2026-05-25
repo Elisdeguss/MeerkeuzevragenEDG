@@ -3,22 +3,42 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:MeerkeuzeUI"
         mc:Ignorable="d"
-        Title="DocentenWindow" Height="550" Width="800">
+        Title="Docenten Panel" Height="650" Width="950">
 
     <Window.Resources>
         <Style x:Key="AfgerondeKnop" TargetType="Button">
             <Setter Property="Background" Value="#FF6A5C5C"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderThickness" Value="0"/>
-
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border Background="{TemplateBinding Background}"
-                        CornerRadius="6"
-                        Padding="{TemplateBinding Padding}">
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.85"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="SecundaireKnop" TargetType="Button">
+            <Setter Property="Background" Value="#34495E"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                     </ControlTemplate>
@@ -35,139 +55,167 @@
     <Grid>
         <TabControl>
 
-
+            <!-- ── Tab 1: Test Genereren ── -->
             <TabItem Header="Test Genereren">
                 <Border Background="#F4F6F7" CornerRadius="12" Margin="15" Padding="20">
-
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="4*" />
-                            <ColumnDefinition Width="5*" />
+                            <ColumnDefinition Width="4*"/>
+                            <ColumnDefinition Width="5*"/>
                         </Grid.ColumnDefinitions>
 
+                        <!-- Links: configuratie -->
                         <StackPanel Grid.Column="0" Margin="0,0,20,0">
-                            <TextBlock Text="Nieuwe Test Configureren" FontSize="20" FontWeight="Bold" Foreground="#2C3E50" Margin="0,0,0,15"/>
+                            <TextBlock Text="Nieuwe Test Configureren" FontSize="20" FontWeight="Bold"
+                                       Foreground="#2C3E50" Margin="0,0,0,5"/>
+                            <TextBlock Text="Vul een testcode in en kies de gewenste vragen per onderwerp."
+                                       FontSize="11" Foreground="#7F8C8D" Margin="0,0,0,15" TextWrapping="Wrap"/>
 
                             <Label Content="Unieke Testcode:" FontWeight="Bold" Foreground="#34495E"/>
                             <TextBox x:Name="TxtTestCode" FontSize="14" Padding="5" Margin="0,0,0,15"/>
 
-                            <TextBlock Text="Kies aantal vragen per onderwerp en moeilijkheidsgraad:" FontWeight="Bold" Foreground="#34495E" Margin="0,0,0,10" TextWrapping="Wrap"/>
+                            <TextBlock Text="Vragen per onderwerp en moeilijkheidsgraad:"
+                                       FontWeight="Bold" Foreground="#34495E" Margin="0,0,0,10" TextWrapping="Wrap"/>
 
+                            <!-- Kolomheaders -->
                             <Grid Margin="0,0,0,5">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="2*" />
-                                    <ColumnDefinition Width="2*" />
-                                    <ColumnDefinition Width="1*" />
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="1*"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="Onderwerp" FontSize="11" FontWeight="Bold" Foreground="#7F8C8D"/>
                                 <TextBlock Grid.Column="1" Text="Moeilijkheid" FontSize="11" FontWeight="Bold" Foreground="#7F8C8D"/>
                                 <TextBlock Grid.Column="2" Text="Aantal" FontSize="11" FontWeight="Bold" Foreground="#7F8C8D" HorizontalAlignment="Center"/>
                             </Grid>
 
+                            <!-- Rij 1 -->
                             <Grid Margin="0,0,0,6">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="2*" />
-                                    <ColumnDefinition Width="2*" />
-                                    <ColumnDefinition Width="1*" />
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="1*"/>
                                 </Grid.ColumnDefinitions>
                                 <ComboBox x:Name="CboOnderwerp1" Grid.Column="0" Margin="0,0,5,0" Padding="4" SelectionChanged="CboOnderwerp_SelectionChanged"/>
                                 <ComboBox x:Name="CboMoeilijkheid1" Grid.Column="1" Margin="5,0,5,0" Padding="4"/>
                                 <TextBox x:Name="TxtAantal1" Grid.Column="2" Margin="5,0,0,0" Padding="4" HorizontalContentAlignment="Center"/>
                             </Grid>
 
+                            <!-- Rij 2 -->
                             <Grid Margin="0,0,0,6">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="2*" />
-                                    <ColumnDefinition Width="2*" />
-                                    <ColumnDefinition Width="1*" />
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="1*"/>
                                 </Grid.ColumnDefinitions>
                                 <ComboBox x:Name="CboOnderwerp2" Grid.Column="0" Margin="0,0,5,0" Padding="4" SelectionChanged="CboOnderwerp_SelectionChanged"/>
                                 <ComboBox x:Name="CboMoeilijkheid2" Grid.Column="1" Margin="5,0,5,0" Padding="4"/>
                                 <TextBox x:Name="TxtAantal2" Grid.Column="2" Margin="5,0,0,0" Padding="4" HorizontalContentAlignment="Center"/>
                             </Grid>
 
+                            <!-- Rij 3 -->
                             <Grid Margin="0,0,0,6">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="2*" />
-                                    <ColumnDefinition Width="2*" />
-                                    <ColumnDefinition Width="1*" />
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="1*"/>
                                 </Grid.ColumnDefinitions>
                                 <ComboBox x:Name="CboOnderwerp3" Grid.Column="0" Margin="0,0,5,0" Padding="4" SelectionChanged="CboOnderwerp_SelectionChanged"/>
                                 <ComboBox x:Name="CboMoeilijkheid3" Grid.Column="1" Margin="5,0,5,0" Padding="4"/>
                                 <TextBox x:Name="TxtAantal3" Grid.Column="2" Margin="5,0,0,0" Padding="4" HorizontalContentAlignment="Center"/>
                             </Grid>
 
+                            <!-- Rij 4 -->
                             <Grid Margin="0,0,0,6">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="2*" />
-                                    <ColumnDefinition Width="2*" />
-                                    <ColumnDefinition Width="1*" />
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="1*"/>
                                 </Grid.ColumnDefinitions>
                                 <ComboBox x:Name="CboOnderwerp4" Grid.Column="0" Margin="0,0,5,0" Padding="4" SelectionChanged="CboOnderwerp_SelectionChanged"/>
                                 <ComboBox x:Name="CboMoeilijkheid4" Grid.Column="1" Margin="5,0,5,0" Padding="4"/>
                                 <TextBox x:Name="TxtAantal4" Grid.Column="2" Margin="5,0,0,0" Padding="4" HorizontalContentAlignment="Center"/>
                             </Grid>
 
+                            <!-- Rij 5 -->
                             <Grid Margin="0,0,0,6">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="2*" />
-                                    <ColumnDefinition Width="2*" />
-                                    <ColumnDefinition Width="1*" />
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="1*"/>
                                 </Grid.ColumnDefinitions>
                                 <ComboBox x:Name="CboOnderwerp5" Grid.Column="0" Margin="0,0,5,0" Padding="4" SelectionChanged="CboOnderwerp_SelectionChanged"/>
                                 <ComboBox x:Name="CboMoeilijkheid5" Grid.Column="1" Margin="5,0,5,0" Padding="4"/>
                                 <TextBox x:Name="TxtAantal5" Grid.Column="2" Margin="5,0,0,0" Padding="4" HorizontalContentAlignment="Center"/>
                             </Grid>
-                            <Button x:Name="BtnGenereerTest" 
-                    Content="Genereer Test" 
-                    FontWeight="Bold" 
-                    Padding="10" 
-                    Margin="0,15,0,0" 
-                    FontSize="14"
-                    Style="{StaticResource AfgerondeKnop}"
-                    Click="BtnGenereerTest_Click" />
+
+                            <!-- Knoppen -->
+                            <Button x:Name="BtnGenereerTest"
+                                    Content="Genereer Test"
+                                    FontWeight="Bold" Padding="10" Margin="0,15,0,6" FontSize="14"
+                                    Style="{StaticResource AfgerondeKnop}"
+                                    Click="BtnGenereerTest_Click"/>
+
+                            <Button x:Name="BtnBewerkTest"
+                                    Content="✏ Bewerk Test Manueel"
+                                    FontWeight="Bold" Padding="10" Margin="0,0,0,0" FontSize="13"
+                                    Style="{StaticResource SecundaireKnop}"
+                                    Click="BtnBewerkTest_Click"/>
                         </StackPanel>
 
+                        <!-- Rechts: preview en opslaan -->
                         <Grid Grid.Column="1">
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
-                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,10">
-                                <TextBlock Text="Totaal geselecteerde vragen: " FontSize="14" Foreground="#2C3E50"/>
-                                <TextBlock x:Name="TxtTotaalVragenaantal" Text="0" FontSize="14" FontWeight="Bold" Foreground="#2E7D32"/>
+                            <StackPanel Grid.Row="0" Orientation="Horizontal"
+                                        HorizontalAlignment="Right" Margin="0,0,0,10">
+                                <TextBlock Text="Totaal geselecteerde vragen: "
+                                           FontSize="14" Foreground="#2C3E50"/>
+                                <TextBlock x:Name="TxtTotaalVragenaantal" Text="0"
+                                           FontSize="14" FontWeight="Bold" Foreground="#2E7D32"/>
                             </StackPanel>
 
-                            <DataGrid x:Name="DGPreviewTestVragen" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" Background="White" RowHeaderWidth="0">
+                            <DataGrid x:Name="DGPreviewTestVragen" Grid.Row="1"
+                                      AutoGenerateColumns="False" IsReadOnly="True"
+                                      Background="White" RowHeaderWidth="0"
+                                      GridLinesVisibility="Horizontal"
+                                      AlternatingRowBackground="#F9F9F9">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Onderwerp" Binding="{Binding Onderwerp}" Width="1*" />
-                                    <DataGridTextColumn Header="Vraag" Binding="{Binding Inhoud}" Width="3*" />
-                                    <DataGridTextColumn Header="Moeilijkheid" Binding="{Binding Moeilijkheidsgraad}" Width="1*" />
+                                    <DataGridTextColumn Header="Onderwerp" Binding="{Binding Onderwerp}" Width="1.2*"/>
+                                    <DataGridTextColumn Header="Vraag" Binding="{Binding Inhoud}" Width="3*"/>
+                                    <DataGridTextColumn Header="Niveau" Binding="{Binding Moeilijkheidsgraad}" Width="1*"/>
                                 </DataGrid.Columns>
                             </DataGrid>
 
-                            <Button x:Name="BtnOpslaanEnExporteren" 
-                    Grid.Row="2" 
-                    Content="Test Opslaan en Exporteren naar TXT"
-                    FontWeight="Bold" 
-                    Padding="12" 
-                    Margin="0,15,0,0" 
-                    FontSize="14"
-                    Style="{StaticResource AfgerondeKnop}"
-                    Click="BtnOpslaanEnExporteren_Click"/>
+                            <Button x:Name="BtnOpslaanEnExporteren"
+                                    Grid.Row="2"
+                                    Content="💾 Test Opslaan en Exporteren naar TXT"
+                                    FontWeight="Bold" Padding="12" Margin="0,15,0,0" FontSize="14"
+                                    Style="{StaticResource AfgerondeKnop}"
+                                    Click="BtnOpslaanEnExporteren_Click"/>
                         </Grid>
                     </Grid>
                 </Border>
             </TabItem>
 
+            <!-- ── Tab 2: Bestaande Test Bekijken ── -->
             <TabItem Header="Bestaande Test Bekijken">
+                <Border Background="#F4F6F7" CornerRadius="12" Margin="15" Padding="20">
+                    <TextBlock Text="Nog niet geïmplementeerd." Foreground="#7F8C8D" FontSize="14"/>
+                </Border>
             </TabItem>
 
+            <!-- ── Tab 3: Scores ── -->
             <TabItem Header="Scores">
+                <Border Background="#F4F6F7" CornerRadius="12" Margin="15" Padding="20">
+                    <TextBlock Text="Nog niet geïmplementeerd." Foreground="#7F8C8D" FontSize="14"/>
+                </Border>
             </TabItem>
+
         </TabControl>
     </Grid>
-
 </Window>
