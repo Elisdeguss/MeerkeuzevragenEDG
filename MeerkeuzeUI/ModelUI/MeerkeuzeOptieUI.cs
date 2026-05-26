@@ -1,20 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Text;
+﻿using System.ComponentModel;
 
-namespace DataLaag.ModelUI
+namespace MeerkeuzeUI.ModelUI
 {
-    public class MeerkeuzeOptieUI
+    public class MeerkeuzeOptieUI : INotifyPropertyChanged
     {
-        public MeerkeuzeOptieUI(int id, string tekst, bool isCorrect)
+        public MeerkeuzeOptieUI(int id, string tekst, bool isCorrect, int vraagId)
         {
             Id = id;
             Tekst = tekst;
             IsCorrect = isCorrect;
+            VraagId = vraagId;
         }
 
         public int Id { get; set; }
+
+        
+        public int VraagId { get; set; }
 
         private string _tekst;
         public string Tekst
@@ -44,9 +45,6 @@ namespace DataLaag.ModelUI
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        public override string ToString()
-        {
-            return Tekst;
-        }
+        public override string ToString() => Tekst;
     }
 }

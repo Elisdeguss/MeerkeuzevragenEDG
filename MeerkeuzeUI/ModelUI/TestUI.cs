@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Text;
+﻿using System.ComponentModel;
 
-namespace DataLaag.ModelUI
+namespace MeerkeuzeUI.ModelUI
 {
     public class TestUI
     {
@@ -46,7 +43,7 @@ namespace DataLaag.ModelUI
             set { _onderwerpen = value; OnPropertyChanged(nameof(Onderwerpen)); }
         }
 
-       
+
         public string OnderwerpenWeergave => string.Join(", ", Onderwerpen);
 
         public event PropertyChangedEventHandler PropertyChanged;

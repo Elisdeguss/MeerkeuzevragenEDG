@@ -1,10 +1,6 @@
 ﻿using BusinessLaag.Exceptions;
 using BusinessLaag.Interfaces;
 using BusinessLaag.Model;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text;
 
 namespace BusinessLaag.Managers
@@ -20,43 +16,43 @@ namespace BusinessLaag.Managers
             _testRepo = testRepo;
         }
 
-        
-       
+
+
         public List<Vraag> GenereerTestVragen(
             string onderwerp,
             int aantal,
             string moeilijkheid = "Gemengd",
             List<Vraag> reedsGekozen = null)
         {
-            
+
             if (string.IsNullOrWhiteSpace(onderwerp))
                 throw new VraagExceptions("Onderwerp mag niet leeg zijn.");
 
             if (aantal <= 0)
                 throw new VraagExceptions("Het aantal vragen moet groter zijn dan 0.");
 
-            
+
             var alleVragen = _vraagRepo.GetVragenByOnderwerp(onderwerp, alleenActief: true);
 
-            
+
             var beschikbaar = alleVragen
                 .Where(v => moeilijkheid == "Gemengd" || v.Moeilijkheidsgraad == moeilijkheid)
                 .Where(v => reedsGekozen == null || !reedsGekozen.Any(r => r.Id == v.Id))
                 .ToList();
 
-            
+
             if (beschikbaar.Count < aantal)
                 throw new VraagExceptions(
                     $"Niet genoeg vragen beschikbaar voor '{onderwerp}' ({moeilijkheid}).\n" +
                     $"Gevraagd: {aantal}, nog beschikbaar: {beschikbaar.Count}.");
 
-            
+
             var geselecteerd = beschikbaar
                 .OrderBy(_ => Guid.NewGuid())
                 .Take(aantal)
                 .ToList();
 
-            
+
             foreach (var vraag in geselecteerd)
             {
                 vraag.Keuzes = HusselAntwoorden(vraag.Keuzes);
@@ -65,20 +61,20 @@ namespace BusinessLaag.Managers
             return geselecteerd;
         }
 
-        
+
         public void OpslaanEnExporteerTest(string testCode, List<Vraag> vragen, string opslagPad)
         {
-            
+
             if (string.IsNullOrWhiteSpace(testCode))
                 throw new VraagExceptions("Testcode mag niet leeg zijn.");
 
             if (vragen == null || vragen.Count == 0)
                 throw new VraagExceptions("Een test moet minstens één vraag bevatten.");
 
-            
+
             _testRepo.OpslaanTest(testCode, vragen);
 
-            
+
             using (StreamWriter swTest = new StreamWriter(opslagPad, false, Encoding.UTF8))
             {
                 swTest.WriteLine("========================================");
@@ -103,7 +99,7 @@ namespace BusinessLaag.Managers
                 }
             }
 
-            
+
             string mapPad = Path.GetDirectoryName(opslagPad);
             string bestandNaam = Path.GetFileNameWithoutExtension(opslagPad);
             string extensie = Path.GetExtension(opslagPad);
@@ -134,7 +130,7 @@ namespace BusinessLaag.Managers
             }
         }
 
-       
+
 
         private List<MeerkeuzeOptie> HusselAntwoorden(List<MeerkeuzeOptie> opties)
         {
@@ -144,6 +140,12 @@ namespace BusinessLaag.Managers
         public Test GetTestByCode(string code)
         {
             return _testRepo.GetTestByCode(code);
+        }
+
+
+        public List<Test> GetAlleTests()
+        {
+            return _testRepo.GetAlleTests();
         }
     }
 }

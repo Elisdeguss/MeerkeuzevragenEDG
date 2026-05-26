@@ -1,145 +1,154 @@
-﻿using BusinessLaag.Managers; 
+﻿using BusinessLaag.Interfaces;
+using BusinessLaag.Managers;
 using BusinessLaag.Model;
+using DataLaag.Repositories;
+using MeerkeuzeUI.Mappers;
 using MeerkeuzeUI.ModelUI;
-using System;
-using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
+using System.IO;
 using System.Windows;
-using System.Windows.Controls;
 
 namespace MeerkeuzeUI
 {
     public partial class StudentWindow : Window
     {
-        
-        private Test _huidigeTest;
-        private Student _huidigeStudent;
-        private ScoreManager _scoreManager;
+        private readonly TestManager _testManager;
+        private readonly ScoreManager _scoreManager;
+
+        private TestUI _huidigeTest;
+        private string _studentNaam;
 
         public StudentWindow()
         {
             InitializeComponent();
 
-            
+            string connectionString = LeesConnectionString();
+            IVraagRepository vraagRepo = new VraagRepository(connectionString);
+            ITestRepository testRepo = new TestRepository(connectionString);
+            IScoreRepository scoreRepo = new ScoreRepository(connectionString);
 
-            _scoreManager = new ScoreManager();
+            _testManager = new TestManager(vraagRepo, testRepo);
+            _scoreManager = new ScoreManager(scoreRepo);
         }
+
+        private string LeesConnectionString()
+        {
+            var config = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .Build();
+            return config.GetConnectionString("SqlConnection");
+        }
+
+        
 
         private void BtnStartTest_Click(object sender, RoutedEventArgs e)
         {
             string naam = TxtStudentNaam.Text.Trim();
             string code = TxtDeelnameCode.Text.Trim();
 
-           
             if (string.IsNullOrWhiteSpace(naam) || string.IsNullOrWhiteSpace(code))
             {
-                MessageBox.Show("Vul zowel je naam als de testcode in!", "Invoer vereist", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Vul zowel je naam als de testcode in!",
+                    "Invoer vereist", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             try
             {
                 
+                Test testDomein = _testManager.GetTestByCode(code);
 
-                
-                _huidigeTest = new Test(1, code, DateTime.Now, new List<Vraag>(), new List<string>());
-                _huidigeStudent = new Student(0, naam);
-
-                if (_huidigeTest == null)
+                if (testDomein == null)
                 {
-                    MessageBox.Show("Deze testcode bestaat niet!", "Fout", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Testcode '{code}' bestaat niet.",
+                        "Niet gevonden", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
-                
-                TxtWeergaveStudentNaam.Text = _huidigeStudent.Naam;
+                _huidigeTest = TestMapper.MapNaarUI(testDomein);
+                _studentNaam = naam;
+
+                TxtWeergaveStudentNaam.Text = _studentNaam;
                 TxtWeergaveOnderwerp.Text = $"Test: {_huidigeTest.Code}";
 
                 
-                ICVragen.ItemsSource = _huidigeTest.VragenInTest;
+                ICVragen.ItemsSource = _huidigeTest.Vragen;
 
-               
                 BorderAanmelden.Visibility = Visibility.Collapsed;
                 GridTestOmgeving.Visibility = Visibility.Visible;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Er liep iets mis bij het starten: {ex.Message}");
+                MessageBox.Show($"Fout bij het starten van de test:\n{ex.Message}",
+                    "Fout", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
+       
+
         private void BtnIndienen_Click(object sender, RoutedEventArgs e)
         {
-            int behaaldeScore = 0;
-            int totaalVragen = _huidigeTest.VragenInTest.Count;
 
-            
-            List<FeedbackResultaat> feedbackLijst = new List<FeedbackResultaat>();
+            var onbeantwoord = _huidigeTest.Vragen
+                .Where(v => !v.Keuzes.Any(k => k.IsGeselecteerd))
+                .ToList();
 
-            for (int i = 0; i < totaalVragen; i++)
+            if (onbeantwoord.Count > 0)
             {
-                Vraag huidigeVraag = _huidigeTest.VragenInTest[i];
+                var keuze = MessageBox.Show(
+                    $"{onbeantwoord.Count} vraag/vragen zijn nog niet beantwoord. Toch indienen?",
+                    "Onvolledige test", MessageBoxButton.YesNo, MessageBoxImage.Warning);
 
-                string gekozenTekst = "Geen antwoord ingevuld";
-                string correcteTekst = "Onbekend";
-                bool correctIngevuld = false;
+                if (keuze == MessageBoxResult.No) return;
+            }
 
-                
-                foreach (var optie in huidigeVraag.Keuzes)
+            try
+            {
+                int behaaldeScore = 0;
+                int totaal = _huidigeTest.Vragen.Count;
+                var feedbackLijst = new List<FeedbackResultaatUI>();
+
+                foreach (var vraag in _huidigeTest.Vragen)
                 {
-                    if (optie.IsCorrect) correcteTekst = optie.Tekst;
-                }
 
-                
-                ContentPresenter container = ICVragen.ItemContainerGenerator.ContainerFromIndex(i) as ContentPresenter;
-                if (container != null)
-                {
-                    ListBox lbOpties = ZoekVisualChild<ListBox>(container);
-                    if (lbOpties != null && lbOpties.SelectedItem != null)
+                    var gekozenOptie = vraag.Keuzes.FirstOrDefault(k => k.IsGeselecteerd);
+                    var correcteOptie = vraag.Keuzes.FirstOrDefault(k => k.IsCorrect);
+
+                    bool isCorrect = gekozenOptie != null && gekozenOptie.IsCorrect;
+                    if (isCorrect) behaaldeScore++;
+
+                    feedbackLijst.Add(new FeedbackResultaatUI
                     {
-                        MeerkeuzeOptie gekozenOptie = lbOpties.SelectedItem as MeerkeuzeOptie;
-                        gekozenTekst = gekozenOptie.Tekst;
-                        correctIngevuld = gekozenOptie.IsCorrect;
-
-                        if (correctIngevuld) behaaldeScore++;
-                    }
+                        VraagInhoud = vraag.Inhoud,
+                        GekozenAntwoord = gekozenOptie?.Tekst ?? "Geen antwoord",
+                        CorrectAntwoord = correcteOptie?.Tekst ?? "Onbekend",
+                        IsCorrect = isCorrect
+                    });
                 }
 
-               
-                feedbackLijst.Add(new FeedbackResultaat
-                {
-                    VraagInhoud = $"{i + 1}. {huidigeVraag.Inhoud}",
-                    GekozenAntwoord = gekozenTekst,
-                    CorrectAntwoord = correcteTekst,
-                    IsCorrect = correctIngevuld
-                });
+                
+                TxtEindScoreWeergave.Text = $"{behaaldeScore} / {totaal}";
+                DGFeedback.ItemsSource = feedbackLijst;
+
+                _scoreManager.SlaScoreOp(_studentNaam, _huidigeTest.Id, behaaldeScore);
+
+                GridTestOmgeving.Visibility = Visibility.Collapsed;
+                GridResultaatScherm.Visibility = Visibility.Visible;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Fout bij het indienen:\n{ex.Message}",
+                    "Fout", MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
             
-            TxtEindScoreWeergave.Text = $"{behaaldeScore} / {totaalVragen}";
-            DGFeedback.ItemsSource = feedbackLijst;
-
             
-            GridTestOmgeving.Visibility = Visibility.Collapsed;
-            GridResultaatScherm.Visibility = Visibility.Visible;
         }
 
         private void BtnSluiten_Click(object sender, RoutedEventArgs e)
         {
             this.Close();
-        }
-
-        
-        private T ZoekVisualChild<T>(DependencyObject parent) where T : DependencyObject
-        {
-            for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
-            {
-                var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
-                if (child is T o) return o;
-
-                var childOfChild = ZoekVisualChild<T>(child);
-                if (childOfChild != null) return childOfChild;
-            }
-            return null;
         }
     }
 }

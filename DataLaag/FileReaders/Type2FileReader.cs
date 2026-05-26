@@ -1,8 +1,5 @@
 ﻿using BusinessLaag.Interfaces;
 using BusinessLaag.Model;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace DataLaag.FileReaders
 {
@@ -13,7 +10,7 @@ namespace DataLaag.FileReaders
             List<Vraag> vragenUitFile = new List<Vraag>();
 
             string tempVraagTekst = "";
-           
+
             List<string> correcteAntwoorden = new List<string>();
             List<string> tempOpties = new List<string>();
             bool isBinnenVraag = false;
@@ -53,10 +50,10 @@ namespace DataLaag.FileReaders
                     onderwerp = onderwerp.Substring(0, onderwerp.Length - 1);
                 }
 
-                
+
             }
-            
-            
+
+
 
             using (StreamReader sr = new StreamReader(filePath))
             {
@@ -66,10 +63,10 @@ namespace DataLaag.FileReaders
                     regel = regel.Trim();
                     if (string.IsNullOrWhiteSpace(regel)) continue;
 
-                    
+
                     if (regel.Equals("Antwoorden", StringComparison.OrdinalIgnoreCase))
                     {
-                        
+
                         if (isBinnenVraag && tempOpties.Count > 0)
                         {
                             vragenUitFile.Add(BouwVraagBasis(tempVraagTekst, tempOpties, onderwerp, moeilijkheidsgraad));
@@ -79,7 +76,7 @@ namespace DataLaag.FileReaders
                         continue;
                     }
 
-                    
+
                     if (isInAntwoordenSleutel)
                     {
                         if ("ABCD".Contains(char.ToUpper(regel[0])))
@@ -87,13 +84,13 @@ namespace DataLaag.FileReaders
                             correcteAntwoorden.Add(char.ToUpper(regel[0]).ToString());
                         }
                     }
-                    
+
                     else
                     {
-                        
+
                         if (IsNieuweVraagRegel(regel, out string vraagInhoud))
                         {
-                            
+
                             if (isBinnenVraag && tempOpties.Count > 0)
                             {
                                 vragenUitFile.Add(BouwVraagBasis(tempVraagTekst, tempOpties, onderwerp, moeilijkheidsgraad));
@@ -103,25 +100,25 @@ namespace DataLaag.FileReaders
                             tempVraagTekst = vraagInhoud;
                             isBinnenVraag = true;
                         }
-                        
+
                         else if (isBinnenVraag && regel.Length > 1 && "ABCD".Contains(char.ToUpper(regel[0])) && (regel[1] == '.' || regel[1] == ')'))
                         {
                             string optieTekst = regel.Substring(2).Trim();
                             tempOpties.Add(optieTekst);
                         }
-                        
+
                         else if (isBinnenVraag && tempOpties.Count == 0)
                         {
                             if (string.IsNullOrEmpty(tempVraagTekst)) tempVraagTekst = regel;
                             else tempVraagTekst += Environment.NewLine + regel;
                         }
 
-                     
+
                     }
                 }
             }
 
-            
+
             for (int i = 0; i < vragenUitFile.Count; i++)
             {
                 if (i < correcteAntwoorden.Count)
@@ -156,7 +153,7 @@ namespace DataLaag.FileReaders
             return false;
         }
 
-        
+
         private Vraag BouwVraagBasis(string inhoud, List<string> opties, string onderwerp, string moeilijkheid)
         {
             Vraag v = new Vraag(onderwerp, inhoud, moeilijkheid, true, new List<MeerkeuzeOptie>())

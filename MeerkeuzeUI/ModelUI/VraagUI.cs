@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Text;
+﻿using System.ComponentModel;
 
-namespace DataLaag.ModelUI
+namespace MeerkeuzeUI.ModelUI
 {
-    public class VraagUI
+    public class VraagUI:INotifyPropertyChanged
     {
 
         public VraagUI(int id, string onderwerp, string inhoud, string moeilijkheidsgraad, bool isActief, List<MeerkeuzeOptieUI> keuzes)
@@ -55,7 +52,7 @@ namespace DataLaag.ModelUI
             set { _keuzes = value; OnPropertyChanged(nameof(Keuzes)); }
         }
 
-       
+
         public event PropertyChangedEventHandler PropertyChanged;
         private void OnPropertyChanged(string propertyName)
         {

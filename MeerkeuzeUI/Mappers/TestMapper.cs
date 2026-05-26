@@ -1,14 +1,12 @@
 ﻿using BusinessLaag.Model;
-using DataLaag.ModelUI;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace DataLaag.Mappers
+using MeerkeuzeUI.ModelUI;
+
+namespace MeerkeuzeUI.Mappers
 {
     public static class TestMapper
     {
-        
+
         public static TestUI MapNaarUI(Test t)
         {
             return new TestUI(
@@ -20,7 +18,7 @@ namespace DataLaag.Mappers
             );
         }
 
-        
+
         public static Test MapNaarDomein(TestUI t)
         {
             return new Test(
@@ -32,7 +30,7 @@ namespace DataLaag.Mappers
             );
         }
 
-        
+
         public static List<TestUI> MapLijstNaarUI(List<Test> testen)
         {
             return testen.Select(t => MapNaarUI(t)).ToList();

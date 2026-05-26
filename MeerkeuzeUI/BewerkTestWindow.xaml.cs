@@ -1,13 +1,10 @@
 ﻿using BusinessLaag.Managers;
-using DataLaag.Mappers;
-using DataLaag.ModelUI;
+
 using MeerkeuzeUI.Mappers;
-using MeerkeuzeUI.Models;
-using System;
+
+using MeerkeuzeUI.ModelUI;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace MeerkeuzeUI
@@ -17,11 +14,10 @@ namespace MeerkeuzeUI
         private readonly TestManager _testManager;
         private readonly VraagManager _vraagManager;
 
-        // Dit is DEZELFDE lijst als in DocentenWindow — niet gekopieerd!
-        // Wijzigingen hier zijn dus meteen zichtbaar in DocentenWindow.
+
         private readonly ObservableCollection<VraagUI> _testvragen;
 
-        // Beschikbare vragen rechts in het scherm
+
         private ObservableCollection<VraagUI> _beschikbareVragen;
 
         public BewerkTestWindow(
@@ -37,18 +33,17 @@ namespace MeerkeuzeUI
 
             _beschikbareVragen = new ObservableCollection<VraagUI>();
 
-            // Linker DataGrid — de huidige testvragen (gedeelde referentie!)
             DGTestvragen.ItemsSource = _testvragen;
 
-            // Rechter DataGrid — beschikbare vragen om toe te voegen
+
             DGBeschikbaar.ItemsSource = _beschikbareVragen;
 
-            // Dropdowns vullen
+
             VulOnderwerpDropdown();
             VulMoeilijkheidsgraadDropdown();
         }
 
-        // ── Dropdowns ────────────────────────────────────────────────────────────
+
 
         private void VulOnderwerpDropdown()
         {
@@ -69,7 +64,7 @@ namespace MeerkeuzeUI
             CboMoeilijkheid.SelectedIndex = 0;
         }
 
-        // ── Beschikbare vragen laden ──────────────────────────────────────────────
+
 
         private void BtnLaadVragen_Click(object sender, RoutedEventArgs e)
         {
@@ -85,11 +80,9 @@ namespace MeerkeuzeUI
 
             try
             {
-                // Haal alle vragen op voor dit onderwerp
-                var alleVragen = _testManager.GenereerTestVragen(
-                    onderwerp, int.MaxValue, moeilijkheid);
+                
+                var alleVragen = _vraagManager.GetVragenByOnderwerp(onderwerp, moeilijkheid);
 
-                // Filter: toon enkel vragen die nog NIET in de test zitten
                 var testvraagIds = _testvragen.Select(v => v.Id).ToHashSet();
                 var beschikbaar = alleVragen
                     .Where(v => !testvraagIds.Contains(v.Id))
@@ -106,15 +99,13 @@ namespace MeerkeuzeUI
             }
         }
 
-        // ── Vragen toevoegen aan de test ──────────────────────────────────────────
 
-        // Via knop
         private void BtnVoegToe_Click(object sender, RoutedEventArgs e)
         {
             VoegGeselecteerdeVraagToe();
         }
 
-        // Via dubbelklik op rechter DataGrid
+
         private void DGBeschikbaar_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             VoegGeselecteerdeVraagToe();
@@ -124,22 +115,20 @@ namespace MeerkeuzeUI
         {
             if (DGBeschikbaar.SelectedItem is not VraagUI geselecteerde) return;
 
-            // Voeg toe aan testvragen (ObservableCollection — DocentenWindow ziet dit meteen)
+
             _testvragen.Add(geselecteerde);
 
-            // Verwijder uit beschikbare lijst zodat je hem niet dubbel kan toevoegen
+
             _beschikbareVragen.Remove(geselecteerde);
         }
 
-        // ── Vragen verwijderen uit de test ───────────────────────────────────────
 
-        // Via knop
         private void BtnVerwijder_Click(object sender, RoutedEventArgs e)
         {
             VerwijderGeselecteerdeVraag();
         }
 
-        // Via dubbelklik op linker DataGrid
+
         private void DGTestvragen_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             VerwijderGeselecteerdeVraag();
@@ -151,12 +140,12 @@ namespace MeerkeuzeUI
 
             _testvragen.Remove(geselecteerde);
 
-            // Voeg terug toe aan beschikbare lijst als het onderwerp/niveau overeenkomt
+
             if (CboOnderwerp.SelectedItem?.ToString() == geselecteerde.Onderwerp)
                 _beschikbareVragen.Add(geselecteerde);
         }
 
-        // ── Accepteren / Annuleren ────────────────────────────────────────────────
+
 
         private void BtnAccepteren_Click(object sender, RoutedEventArgs e)
         {

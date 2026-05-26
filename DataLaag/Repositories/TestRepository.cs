@@ -1,9 +1,7 @@
-﻿using BusinessLaag.Interfaces;
+﻿using BusinessLaag.Exceptions;
+using BusinessLaag.Interfaces;
 using BusinessLaag.Model;
 using Microsoft.Data.SqlClient;
-using System;
-using System.Collections.Generic;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace DataLaag.Repositories
 {
@@ -16,7 +14,7 @@ namespace DataLaag.Repositories
             _connectionString = connectionString;
         }
 
-  
+
         public void OpslaanTest(string testCode, List<Vraag> vragen)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
@@ -26,17 +24,17 @@ namespace DataLaag.Repositories
 
                 try
                 {
-                   
+
                     string sqlCheck = "SELECT COUNT(*) FROM Testen WHERE Code = @code";
                     using (SqlCommand cmdCheck = new SqlCommand(sqlCheck, conn, trans))
                     {
                         cmdCheck.Parameters.AddWithValue("@code", testCode);
                         int aantal = (int)cmdCheck.ExecuteScalar();
                         if (aantal > 0)
-                            throw new Exception("Deze testcode bestaat al! Kies een unieke code.");
+                            throw new VraagExceptions("Deze testcode bestaat al! Kies een unieke code.");
                     }
 
-                    
+
                     string sqlTest = "INSERT INTO Testen (Code, Datum) OUTPUT INSERTED.Id VALUES (@code, @datum)";
                     int nieuwTestId;
 
@@ -47,7 +45,7 @@ namespace DataLaag.Repositories
                         nieuwTestId = (int)cmdTest.ExecuteScalar();
                     }
 
-                    
+
                     foreach (var vraag in vragen)
                     {
                         string sqlKoppel = "INSERT INTO TestVragen (TestId, VraagId) VALUES (@testId, @vraagId)";
@@ -79,7 +77,7 @@ namespace DataLaag.Repositories
             {
                 conn.Open();
 
-                
+
                 using (SqlCommand cmd = new SqlCommand(sql, conn))
                 {
                     using (SqlDataReader reader = cmd.ExecuteReader())
@@ -91,13 +89,13 @@ namespace DataLaag.Repositories
                                 reader["Code"].ToString(),
                                 (DateTime)reader["Datum"],
                                 new List<Vraag>(),
-                                new List<string>() 
+                                new List<string>()
                             ));
                         }
                     }
                 }
 
-               
+
                 string sqlOnderwerpen = @"SELECT o.Naam 
                                   FROM Onderwerpen o
                                   JOIN TestOnderwerpen tond ON o.Id = tond.OnderwerpId
@@ -137,7 +135,7 @@ namespace DataLaag.Repositories
 
                 int testId;
 
-                
+
                 using (SqlCommand cmdTest = new SqlCommand(sqlTest, conn))
                 {
                     cmdTest.Parameters.AddWithValue("@code", testCode);
@@ -153,12 +151,12 @@ namespace DataLaag.Repositories
                             reader["Code"].ToString(),
                             (DateTime)reader["Datum"],
                             new List<Vraag>(),
-                            new List<string>()  
+                            new List<string>()
                         );
                     }
                 }
 
-                
+
                 string sqlOnderwerpen = @"SELECT o.Naam 
                                   FROM Onderwerpen o
                                   JOIN TestOnderwerpen tond ON o.Id = tond.OnderwerpId
@@ -177,7 +175,7 @@ namespace DataLaag.Repositories
                     }
                 }
 
-               
+
                 string sqlVragen = @"SELECT v.Id, v.InhoudTekst, v.Moeilijkheidsgraad, v.IsActief,
                                     o.Naam AS Onderwerp
                              FROM Vragen v
@@ -206,7 +204,7 @@ namespace DataLaag.Repositories
                     }
                 }
 
-               
+
                 foreach (var vraag in vragen)
                 {
                     string sqlOpties = "SELECT Id, Inhoud, IsCorrect FROM Antwoorden WHERE VraagId = @vraagId";

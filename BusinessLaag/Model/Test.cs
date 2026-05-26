@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace BusinessLaag.Model
+﻿namespace BusinessLaag.Model
 {
     public class Test
     {
@@ -25,29 +21,6 @@ namespace BusinessLaag.Model
 
         public List<TestResultaat> DeelnemendeStudentenResultaten { get; set; } = new List<TestResultaat>();
 
-
-        public double KlasGemiddelde
-        {
-            get
-            {
-                if (DeelnemendeStudentenResultaten == null || DeelnemendeStudentenResultaten.Count == 0) return 0;
-
-                
-                return Math.Round(DeelnemendeStudentenResultaten.Average(r => r.Score), 1);
-            }
-        }
-
-        
-        public string GemiddeldeWeergave
-        {
-            get
-            {
-                
-                int aantalVragen = VragenInTest?.Count ?? 0;
-
-                return $"{KlasGemiddelde} / {aantalVragen}";
-            }
-        }
 
         public override string ToString()
         {

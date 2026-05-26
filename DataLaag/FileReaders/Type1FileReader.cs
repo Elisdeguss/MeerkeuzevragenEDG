@@ -1,9 +1,5 @@
 ﻿using BusinessLaag.Interfaces;
 using BusinessLaag.Model;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace DataLaag.FileReaders
 {
@@ -60,7 +56,7 @@ namespace DataLaag.FileReaders
 
                 while ((line = reader.ReadLine()) != null)
                 {
-                    line = line.Trim(); 
+                    line = line.Trim();
                     teller++;
 
                     if (string.IsNullOrWhiteSpace(line)) continue;
@@ -72,7 +68,7 @@ namespace DataLaag.FileReaders
                             throw new Exception($"Fout in {fileName} op regel {teller}: " +
                                 $"Nieuwe vraag gestart terwijl de vorige ('{tempVraagTekst}') nog niet volledig is.");
                         }
-                        
+
                         tempVraagTekst = line.Split(new[] { ". " }, 2, StringSplitOptions.None)[1];
                     }
                     else if (line.Length > 1 && char.IsLetter(line[0]) && line[1] == '.')

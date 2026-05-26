@@ -1,16 +1,13 @@
 ﻿using BusinessLaag.Interfaces;
 using BusinessLaag.Managers;
+using BusinessLaag.Model;
 using DataLaag;
-using DataLaag.Mappers;
-using DataLaag.ModelUI;
 using DataLaag.Repositories;
 using MeerkeuzeUI.Mappers;
-using MeerkeuzeUI.Models;
+using MeerkeuzeUI.ModelUI;
 using Microsoft.Extensions.Configuration;
-using System;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using Path = System.IO.Path;
@@ -21,27 +18,29 @@ namespace MeerkeuzeUI
     {
         private readonly VraagManager _vraagManager;
         private readonly TestManager _testManager;
+        private readonly ScoreManager _scoreManager;
 
-        // ObservableCollection — DataGrid update automatisch bij Add/Remove
+
         private ObservableCollection<VraagUI> _geselecteerdeVragen;
 
         public DocentenWindow()
         {
             InitializeComponent();
 
-            // Config lezen en lagen opzetten
+
             string connectionString = LeesConnectionString();
             IVraagRepository vraagRepo = new VraagRepository(connectionString);
             ITestRepository testRepo = new TestRepository(connectionString);
+            IScoreRepository scoreRepo = new ScoreRepository(connectionString);
 
             _vraagManager = new VraagManager(vraagRepo, new FileReaderFactory());
             _testManager = new TestManager(vraagRepo, testRepo);
+            _scoreManager = new ScoreManager(scoreRepo);
 
-            // ObservableCollection aanmaken en koppelen aan DataGrid via binding
             _geselecteerdeVragen = new ObservableCollection<VraagUI>();
             DGPreviewTestVragen.ItemsSource = _geselecteerdeVragen;
 
-            // CollectionChanged: update teller automatisch als lijst verandert
+
             _geselecteerdeVragen.CollectionChanged += (s, e) =>
             {
                 TxtTotaalVragenaantal.Text = _geselecteerdeVragen.Count.ToString();
@@ -50,9 +49,10 @@ namespace MeerkeuzeUI
             SeedDatabaseVanuitResources();
             VulOnderwerpDropdowns();
             VulMoeilijkheidsgraadDropdowns();
+            VulBestaandeTestsDropdown();
         }
 
-        // ── Configuratie ─────────────────────────────────────────────────────────
+
 
         private string LeesConnectionString()
         {
@@ -63,13 +63,13 @@ namespace MeerkeuzeUI
             return config.GetConnectionString("SqlConnection");
         }
 
-        // ── Dropdowns vullen ─────────────────────────────────────────────────────
+
 
         private void VulOnderwerpDropdowns()
         {
             try
             {
-                // Via manager, nooit rechtstreeks via repository!
+
                 var onderwerpen = _vraagManager.GetAlleOnderwerpen();
 
                 foreach (var cbo in new[] { CboOnderwerp1, CboOnderwerp2, CboOnderwerp3, CboOnderwerp4, CboOnderwerp5 })
@@ -95,7 +95,7 @@ namespace MeerkeuzeUI
             }
         }
 
-        // ── Data-import bij opstarten ─────────────────────────────────────────────
+
 
         private void SeedDatabaseVanuitResources()
         {
@@ -107,7 +107,7 @@ namespace MeerkeuzeUI
                 foreach (string bestand in Directory.GetFiles(resourcesPath, "*.txt"))
                 {
                     try { _vraagManager.ImporteerBestand(bestand); }
-                    catch { /* duplicaten worden stilletjes genegeerd */ }
+                    catch { }
                 }
             }
             catch (Exception ex)
@@ -117,7 +117,7 @@ namespace MeerkeuzeUI
             }
         }
 
-        // ── Tab: Test Genereren ───────────────────────────────────────────────────
+
 
         private void BtnGenereerTest_Click(object sender, RoutedEventArgs e)
         {
@@ -149,12 +149,12 @@ namespace MeerkeuzeUI
                     string onderwerp = rij.Onderwerp.SelectedItem.ToString();
                     string moeilijkheid = rij.Moeilijkheid.SelectedItem?.ToString() ?? "Gemengd";
 
-                    // Businesslogica zit in de manager, niet hier!
+
                     var nieuweVragen = _testManager.GenereerTestVragen(
                         onderwerp, aantal, moeilijkheid,
                         VraagMapper.MapLijstNaarDomein(_geselecteerdeVragen.ToList()));
 
-                    // Domein → UI via mapper, dan toevoegen aan ObservableCollection
+
                     foreach (var v in VraagMapper.MapLijstNaarUI(nieuweVragen))
                         _geselecteerdeVragen.Add(v);
                 }
@@ -179,12 +179,11 @@ namespace MeerkeuzeUI
                 return;
             }
 
-            // We geven de ObservableCollection rechtstreeks mee —
-            // wijzigingen in BewerkTestWindow zijn dus direct zichtbaar hier.
+
             var bewerkWindow = new BewerkTestWindow(_geselecteerdeVragen, _testManager, _vraagManager);
             bewerkWindow.ShowDialog();
 
-            // Geen refresh nodig! ObservableCollection heeft de DataGrid al geüpdatet.
+
         }
 
         private void BtnOpslaanEnExporteren_Click(object sender, RoutedEventArgs e)
@@ -212,12 +211,12 @@ namespace MeerkeuzeUI
                 string basisNaam = $"Test_{testCode}";
                 string doelBestand = Path.Combine(downloadsPad, $"{basisNaam}.txt");
 
-                // Vermijd overschrijven van bestaand bestand
+
                 int teller = 1;
                 while (File.Exists(doelBestand))
                     doelBestand = Path.Combine(downloadsPad, $"{basisNaam} ({teller++}).txt");
 
-                // UI → domein via mapper, dan opslaan via manager
+
                 var vragenDomein = VraagMapper.MapLijstNaarDomein(_geselecteerdeVragen.ToList());
                 _testManager.OpslaanEnExporteerTest(testCode, vragenDomein, doelBestand);
 
@@ -236,13 +235,12 @@ namespace MeerkeuzeUI
             }
         }
 
-        // ── Moeilijkheidsgraad dynamisch updaten bij onderwerpkeuze ──────────────
+
 
         private void CboOnderwerp_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (sender is not ComboBox cboOnderwerp || cboOnderwerp.SelectedItem == null) return;
 
-            // Zoek de bijhorende moeilijkheidsgraad-dropdown via de naam
             string suffix = cboOnderwerp.Name.Last().ToString();
             var cbos = new[] { CboMoeilijkheid1, CboMoeilijkheid2, CboMoeilijkheid3, CboMoeilijkheid4, CboMoeilijkheid5 };
             if (!int.TryParse(suffix, out int index) || index < 1 || index > cbos.Length) return;
@@ -252,11 +250,15 @@ namespace MeerkeuzeUI
 
             try
             {
-                // Haal beschikbare moeilijkheidsgraden op via manager
-                var vragen = _testManager.GenereerTestVragen(onderwerp, 1);
-                var graden = vragen.Select(v => v.Moeilijkheidsgraad).Distinct().ToList();
 
-                cboMoeilijkheid.ItemsSource = new[] { "Gemengd" }.Concat(graden).ToList();
+                var alleVragen = _vraagManager.GetVragenByOnderwerp(onderwerp);
+                var niveaus = alleVragen
+                    .Select(v => v.Moeilijkheidsgraad)
+                    .Distinct()
+                    .OrderBy(n => n)
+                    .ToList();
+
+                cboMoeilijkheid.ItemsSource = new[] { "Gemengd" }.Concat(niveaus).ToList();
                 cboMoeilijkheid.SelectedIndex = 0;
             }
             catch
@@ -265,5 +267,138 @@ namespace MeerkeuzeUI
                 cboMoeilijkheid.SelectedIndex = 0;
             }
         }
+        private class TestVraagRijUI
+        {
+            public int Nummer { get; set; }
+            public string Inhoud { get; set; }
+            public string JuistAntwoord { get; set; }
+            public string Moeilijkheidsgraad { get; set; }
+        }
+
+        
+        private class TestGemiddeldeRijUI
+        {
+            public string TestCode { get; set; }
+            public int AantalDeelnemers { get; set; }
+            public double GemiddeldeOp20 { get; set; }
+            public string GemiddeldeOp20Weergave => $"{GemiddeldeOp20} / 20";
+        }
+
+
+        private void VulBestaandeTestsDropdown()
+        {
+            try
+            {
+                var testen = _testManager.GetAlleTests();
+
+                CboBestaandeTests.ItemsSource = testen;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Fout bij laden tests: {ex.Message}",
+                    "Fout", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void CboBestaandeTests_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (CboBestaandeTests.SelectedItem is not Test geselecteerdeTest) return;
+
+            try
+            {
+                
+                var test = _testManager.GetTestByCode(geselecteerdeTest.Code);
+
+                
+                var rijen = test.VragenInTest
+                    .Select((v, index) => new TestVraagRijUI
+                    {
+                        Nummer = index + 1,
+                        Inhoud = v.Inhoud,
+                        
+                        JuistAntwoord = v.Keuzes.FirstOrDefault(k => k.IsCorrect)?.Tekst ?? "?",
+                        Moeilijkheidsgraad = v.Moeilijkheidsgraad
+                    })
+                    .ToList();
+
+                DGBestaandeTestVragen.ItemsSource = rijen;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Fout bij laden test: {ex.Message}",
+                    "Fout", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        
+
+        private void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            
+            if (sender is TabControl tc && tc.SelectedIndex == 2)
+                LaadScores();
+        }
+
+        private void LaadScores()
+        {
+            try
+            {
+                var alleScores = _scoreManager.GetAlleScores();
+
+                
+                var perStudent = alleScores
+                    .GroupBy(r => r.Student.Naam)
+                    .SelectMany(g =>
+                    {
+                        int totaalPunten = g.Sum(r => r.Score);
+                        int totaalVragen = g.Sum(r => r.TotaalVragen);
+
+                        return g.Select(r => new ScoreRijUI
+                        {
+                            StudentNaam = r.Student.Naam,
+                            TestCode = r.Test.Code,
+                            BehaaldePunten = r.Score,
+                            TotaalVragen = r.TotaalVragen,
+                            TotaalPuntenAlleTests = totaalPunten,   
+                            TotaalVragenAlleTests = totaalVragen   
+                        });
+                    })
+                    .ToList();
+
+                DGScoresPerStudent.ItemsSource = perStudent;
+
+                
+                var perTest = alleScores
+                    .GroupBy(r => r.Test.Code)
+                    .Select(g => new TestGemiddeldeRijUI
+                    {
+                        TestCode = g.Key,
+                        AantalDeelnemers = g.Count(),
+                        GemiddeldeOp20 = g.Sum(r => r.TotaalVragen) == 0 ? 0 :
+                            Math.Round(
+                                g.Average(r => r.TotaalVragen == 0 ? 0 :
+                                    (double)r.Score / r.TotaalVragen * 20), 1)
+                    })
+                    .ToList();
+
+                DGGemiddeldePerTest.ItemsSource = perTest;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Fout bij laden scores: {ex.Message}",
+                    "Fout", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void BtnVragenBeheren_Click(object sender, RoutedEventArgs e)
+        {
+            var beheerWindow = new VragenBeheerWindow(_vraagManager);
+            beheerWindow.ShowDialog();
+
+            
+            VulOnderwerpDropdowns();
+            VulBestaandeTestsDropdown();
+        }
     }
+
 }

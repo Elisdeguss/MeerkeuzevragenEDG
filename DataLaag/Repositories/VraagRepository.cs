@@ -1,8 +1,6 @@
 ﻿using BusinessLaag.Interfaces;
 using BusinessLaag.Model;
 using Microsoft.Data.SqlClient;
-using System;
-using System.Collections.Generic;
 
 namespace DataLaag.Repositories
 {
@@ -93,7 +91,7 @@ namespace DataLaag.Repositories
                 try
                 {
 
-                    string sqlCheck = "SELECT COUNT(*) FROM Vragen WHERE InhoudTekst = @tekst"; //hier eventueel zien of ik de levenstien algorithme kan gebruiken om robuuster te checken
+                    string sqlCheck = "SELECT COUNT(*) FROM Vragen WHERE InhoudTekst = @tekst"; 
                     SqlCommand cmdCheck = new SqlCommand(sqlCheck, conn, trans);
                     cmdCheck.Parameters.AddWithValue("@tekst", vraag.Inhoud);
 
@@ -203,6 +201,6 @@ namespace DataLaag.Repositories
             return onderwerpen;
         }
 
-        
+
     }
 }

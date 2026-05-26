@@ -1,9 +1,6 @@
 ﻿using BusinessLaag.Exceptions;
 using BusinessLaag.Interfaces;
 using BusinessLaag.Model;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace BusinessLaag.Managers
 {
@@ -14,11 +11,11 @@ namespace BusinessLaag.Managers
 
         public VraagManager(IVraagRepository vraagRepo, IFileReaderFactory fileReaderFactory)
         {
-            _vraagRepo = vraagRepo ?? throw new ArgumentNullException(nameof(vraagRepo));
-            _fileReaderFactory = fileReaderFactory ?? throw new ArgumentNullException(nameof(fileReaderFactory));
+            _vraagRepo = vraagRepo;
+            _fileReaderFactory = fileReaderFactory;
         }
 
-       
+
         public void ImporteerBestand(string path)
         {
             if (string.IsNullOrWhiteSpace(path))
@@ -33,7 +30,7 @@ namespace BusinessLaag.Managers
             }
         }
 
-        
+
         public void VoegNieuweVraagToe(Vraag vraag)
         {
             if (vraag == null)
@@ -54,7 +51,7 @@ namespace BusinessLaag.Managers
             _vraagRepo.VoegVraagToe(vraag);
         }
 
-        
+
         public void ArchiveerVraag(int id)
         {
             if (id <= 0)
@@ -63,10 +60,22 @@ namespace BusinessLaag.Managers
             _vraagRepo.DeactiveerVraag(id);
         }
 
-        
+
         public List<string> GetAlleOnderwerpen()
         {
             return _vraagRepo.GetAlleOnderwerpen();
+        }
+
+        public List<Vraag> GetVragenByOnderwerp(string onderwerp, string moeilijkheid = "Gemengd", bool alleenActief = true)
+        {
+            if (string.IsNullOrWhiteSpace(onderwerp))
+                throw new VraagExceptions("Onderwerp mag niet leeg zijn.");
+
+            var alleVragen = _vraagRepo.GetVragenByOnderwerp(onderwerp, alleenActief: true);
+
+            return alleVragen
+                .Where(v => moeilijkheid == "Gemengd" || v.Moeilijkheidsgraad == moeilijkheid)
+                .ToList();
         }
     }
 }

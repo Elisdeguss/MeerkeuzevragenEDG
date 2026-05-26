@@ -1,17 +1,14 @@
 ﻿using BusinessLaag.Model;
-using DataLaag.ModelUI;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using MeerkeuzeUI.ModelUI;
 
-namespace DataLaag.Mappers
+namespace MeerkeuzeUI.Mappers
 {
     public static class MeerkeuzeOptieMapper
     {
-
-        public static MeerkeuzeOptieUI MapNaarUI(MeerkeuzeOptie o)
+        
+        public static MeerkeuzeOptieUI MapNaarUI(MeerkeuzeOptie o, int vraagId)
         {
-            return new MeerkeuzeOptieUI(o.Id, o.Tekst, o.IsCorrect);
+            return new MeerkeuzeOptieUI(o.Id, o.Tekst, o.IsCorrect, vraagId);
         }
 
         public static MeerkeuzeOptie MapNaarDomein(MeerkeuzeOptieUI o)
