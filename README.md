@@ -186,7 +186,7 @@
 
 # 
 
-# Plaats de `.txt` bestanden in de map `MeerkeuzeUI/Resources/`. Ze worden automatisch ingeladen bij het opstarten van de docentenomgeving.
+# Plaats de `.txt` bestanden in de map `MeerkeuzeUI/Resources/`. Ze worden automatisch ingeladen bij het opstarten van de docentenomgeving. Er zijn al een aantal aanwezig als seeddata ook.
 
 # 
 
