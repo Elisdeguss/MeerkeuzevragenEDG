@@ -1,6 +1,12 @@
 # \# Meerkeuzevragen — Programmeren Gevorderd 1
 
-# 
+# # MeerkeuzevragenEDG
+
+> **Context & Leerdoel:** Eindopdracht 1e academiejaar Graduaat Programmeren (Programmeren Gevorderd 1, begin 2026).
+> 
+> **Focus van het project:** Eerste kennismaking met een 3-lagenarchitectuur (Business, Data, UI) in C#, koppeling met Microsoft SQL Server en unit testing via xUnit.
+> 
+> **Retrospectieve & groei:** Dit project weerspiegelt de basiscompetenties van jaar 1. In latere projecten (zoals *Deadline Dashboard*) werk ik inmiddels met een moderne API-gestuurde cloudarchitectuur, TypeScript, en striktere clean architecture-standaarden.
 
 # Applicatie voor het opstellen, afleggen en beheren van meerkeuzevragen, gebouwd in C# met een 3-lagen architectuur.
 
